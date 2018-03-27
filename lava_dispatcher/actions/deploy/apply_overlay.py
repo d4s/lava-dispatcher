@@ -82,9 +82,11 @@ class ApplyOverlayGuest(Action):
         guest_dir = self.mkdtemp()
         guest_file = os.path.join(guest_dir, self.guest_filename)
         self.set_namespace_data(action=self.name, label='guest', key='filename', value=guest_file)
+        lava_test_results_dir = self.get_namespace_data(action='test', label='results', key='lava_test_results_dir')
         blkid = prepare_guestfs(
             guest_file, overlay_file,
-            self.job.device['actions']['deploy']['methods']['image']['parameters']['guest']['size'])
+            self.job.device['actions']['deploy']['methods']['image']['parameters']['guest']['size'],
+            lava_test_results_dir)
         self.results = {'success': blkid}
         self.set_namespace_data(action=self.name, label='guest', key='UUID', value=blkid)
         return connection

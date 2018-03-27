@@ -116,9 +116,9 @@ def write_bootscript(commands, filename):
 
 
 @replace_exception(RuntimeError, JobError)
-def prepare_guestfs(output, overlay, size):
+def prepare_guestfs(output, overlay, size, target_mountpoint=""):
     """
-    Applies the overlay, offset by one directory.
+    Applies the overlay, offset by the target directory.
     This allows the booted device to mount at the
     original lava directory and retain the same path
     as if the overlay was unpacked directly into the
@@ -126,6 +126,7 @@ def prepare_guestfs(output, overlay, size):
     :param output: filename of the temporary device
     :param overlay: tarball of the lava test shell overlay.
     :param size: size of the filesystem in Mb
+    :param target_mountpoint: path to the mount point on the host
     :return blkid of the guest device
     """
     guest = guestfs.GuestFS(python_return_dict=True)
@@ -146,9 +147,10 @@ def prepare_guestfs(output, overlay, size):
     guest_dir = mkdtemp()
     guest_tar = os.path.join(guest_dir, 'guest.tar')
     root_tar = tarfile.open(guest_tar, 'w')
-    for topdir in os.listdir(tar_output):
-        for dirname in os.listdir(os.path.join(tar_output, topdir)):
-            root_tar.add(os.path.join(tar_output, topdir, dirname), arcname=dirname)
+    target_mountpoint = target_mountpoint.lstrip("/")
+    topdir = os.path.join(tar_output, target_mountpoint)
+    for dirname in os.listdir(topdir):
+        root_tar.add(os.path.join(tar_output, topdir, dirname), arcname=dirname)
     root_tar.close()
     guest.tar_in(guest_tar, '/')
     os.unlink(guest_tar)
